@@ -22,7 +22,23 @@ npm run sim 500  # play 500 whole matches headless and report on them
 npm run build    # static bundle in dist/ — drop it on any host
 ```
 
-The build is a plain static site with no backend, so GitHub Pages, Netlify or Cloudflare Pages will all serve it as-is.
+---
+
+## Hosting it
+
+The build is a plain static site with no backend, so it costs nothing to host. Two good options:
+
+**GitHub Pages** — nothing extra to sign up for. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) is already in the repo: push to `main`, then set **Settings → Pages → Source → GitHub Actions** once, and every push republishes. Limits are a 1 GB site and a soft 100 GB/month of bandwidth. Two catches: on a free GitHub account, Pages only works from a **public** repo, and GitHub's terms rule out commercial use.
+
+**Cloudflare Pages** — connect the repo, build command `npm run build`, output directory `dist`. Works with private repos on the free plan, and bandwidth is unmetered. It is also where the multiplayer server will want to live, which makes it the better long-run choice.
+
+Either way `vite.config.ts` sets `base: './'`, so the build works from a subpath (`user.github.io/304/`) without changes.
+
+### When multiplayer lands
+
+Online rooms need something stateful that static hosting cannot do. The natural fit is a **Cloudflare Worker with a Durable Object per room** — one object holds the room's seed and action list, and the WebSocket Hibernation API means an idle table between hands costs nothing. Durable Objects are on the Workers free plan (SQLite-backed only), which allows 100,000 requests a day — orders of magnitude more than a few friends will ever use.
+
+Bluetooth needs no hosting at all. It is phone-to-phone, so the only cost there is getting the native build onto devices: TestFlight is free, a Google Play developer account is a one-off fee, and Apple's is annual.
 
 ---
 
