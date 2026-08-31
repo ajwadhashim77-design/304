@@ -27,9 +27,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
-      - run: npm ci
+      # No package-lock.json is committed yet, and `npm ci` requires one (as
+      # does setup-node's npm cache). Run `npm install` locally, commit the
+      # lockfile it writes, then swap this for `npm ci` and add `cache: npm`
+      # above for faster, reproducible builds.
+      - run: npm install
       - run: npm test
       - run: npm run build
 
