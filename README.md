@@ -4,7 +4,7 @@ A playable web version of **304** (තුන් සිය හතර), the Sri La
 
 Four players, two teams, thirty-two cards worth exactly three hundred and four points, and a trump that nobody can see until somebody calls for it.
 
-**Today:** the complete rules engine, a casino-style table, pass-and-play for four friends on one device, practice against bots — and **online rooms**: open a table, send three friends a five-letter code, and bots fill any empty seats.
+**Today:** the complete rules engine, a casino-style table, practice against bots, and **online rooms**: open a table, send three friends a five-letter code (or a one-tap invite link), and bots fill any empty seats.
 **Next:** Bluetooth for people in the same room. The groundwork is in place — see [Roadmap](#roadmap).
 
 ---
@@ -114,7 +114,7 @@ src/
     rng.ts       seeded shuffle
   net/
     transport.ts the seam multiplayer plugs into
-  ui/            React components, the table, the pass-and-play gate
+  ui/            React components: the table, the lobby, the online flow
 ```
 
 Two decisions carry the whole thing:

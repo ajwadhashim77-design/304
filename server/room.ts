@@ -135,8 +135,9 @@ export class Room {
     if (msg.token) {
       const existing = this.players.find((p) => !p.isBot && p.token === msg.token)
       if (existing) {
+        // A reclaim keeps the original name — the token proves the seat, and
+        // renaming here let a shared browser quietly relabel another player.
         existing.connected = true
-        if (msg.name) existing.name = this.dedupeName(cleanName(msg.name), existing.id)
         this.afterChange()
         return { ok: true, playerId: existing.id, token: existing.token }
       }

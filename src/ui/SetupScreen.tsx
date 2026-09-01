@@ -2,9 +2,9 @@ import { useState } from 'react'
 
 import { DEFAULT_RULES } from '../game/rules'
 import type { PlayerConfig, Seat } from '../game/types'
-import type { TableMode, TableSetup } from './useGame'
+import type { TableSetup } from './useGame'
 
-const SUGGESTED = ['Nimal', 'Kavi', 'Ruwan', 'Dilani']
+const BOT_NAMES = ['', 'Kavi', 'Ruwan', 'Dilani']
 
 export function SetupScreen({
   onStart,
@@ -13,8 +13,7 @@ export function SetupScreen({
   onStart: (setup: TableSetup) => void
   onOnline: () => void
 }) {
-  const [mode, setMode] = useState<TableMode>('pass-and-play')
-  const [names, setNames] = useState<string[]>(SUGGESTED)
+  const [names, setNames] = useState<string[]>(BOT_NAMES)
   const [teamNames, setTeamNames] = useState<[string, string]>(['Us', 'Them'])
   const [target, setTarget] = useState(DEFAULT_RULES.targetGamePoints)
   const [minBid, setMinBid] = useState(DEFAULT_RULES.minBid)
@@ -22,14 +21,17 @@ export function SetupScreen({
   const setName = (seat: number, value: string) =>
     setNames((prev) => prev.map((n, i) => (i === seat ? value : n)))
 
+  const named = names[0].trim().length > 0
+
   const start = () => {
+    if (!named) return
     const players: PlayerConfig[] = [0, 1, 2, 3].map((seat) => ({
       seat: seat as Seat,
-      name: (names[seat] || SUGGESTED[seat]).trim().slice(0, 14),
-      isBot: mode === 'solo' && seat !== 0,
+      name: (names[seat] || BOT_NAMES[seat]).trim().slice(0, 14),
+      isBot: seat !== 0,
     }))
     onStart({
-      mode,
+      mode: 'solo',
       players,
       teamNames,
       rules: { targetGamePoints: target, minBid },
@@ -50,19 +52,12 @@ export function SetupScreen({
 
         <section className="setup__block">
           <h2 className="setup__label">Table</h2>
-          <div className="segmented segmented--three">
-            <button
-              className={mode === 'pass-and-play' ? 'is-active' : ''}
-              onClick={() => setMode('pass-and-play')}
-            >
-              Pass &amp; play
-              <small>Four of you, one device</small>
-            </button>
+          <div className="segmented">
             <button onClick={onOnline}>
-              Online
-              <small>Join with a code</small>
+              Play with friends
+              <small>Online, with a table code</small>
             </button>
-            <button className={mode === 'solo' ? 'is-active' : ''} onClick={() => setMode('solo')}>
+            <button className="is-active">
               Practice
               <small>You and three bots</small>
             </button>
@@ -79,7 +74,7 @@ export function SetupScreen({
                 seat={2}
                 team={0}
                 value={names[2]}
-                bot={mode === 'solo'}
+                bot={true}
                 onChange={setName}
               />
             </div>
@@ -88,7 +83,7 @@ export function SetupScreen({
                 seat={1}
                 team={1}
                 value={names[1]}
-                bot={mode === 'solo'}
+                bot={true}
                 onChange={setName}
               />
             </div>
@@ -100,7 +95,7 @@ export function SetupScreen({
                 seat={3}
                 team={1}
                 value={names[3]}
-                bot={mode === 'solo'}
+                bot={true}
                 onChange={setName}
               />
             </div>
@@ -159,13 +154,13 @@ export function SetupScreen({
           </p>
         </section>
 
-        <button className="btn btn--gold btn--wide" onClick={start}>
-          Deal
+        <button className="btn btn--gold btn--wide" disabled={!named} onClick={start}>
+          {named ? 'Deal' : 'Type your name to deal'}
         </button>
 
         <p className="setup__foot">
-          Bluetooth and online rooms are next. The rules engine already speaks in actions, so
-          the table can be shared across devices without changing how the game plays.
+          Online play lives behind "Play with friends" — open a table, share the five-letter
+          code, and bots fill any empty seats. Bluetooth for same-room play is next.
         </p>
       </div>
     </div>
@@ -195,7 +190,8 @@ function SeatField({
         value={value}
         maxLength={14}
         disabled={bot}
-        placeholder={SUGGESTED[seat]}
+        autoFocus={!bot}
+        placeholder={bot ? BOT_NAMES[seat] : 'Your name'}
         onChange={(e) => onChange(seat, e.target.value)}
       />
     </label>

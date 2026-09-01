@@ -1,4 +1,4 @@
-import { useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 
 import type { Seat } from '../game/types'
 import { OnlineSession } from '../net/online'
@@ -10,12 +10,19 @@ import { useOnlineGame } from './useOnlineGame'
  * The whole online flow: pick a name → create or join → lobby → table.
  * The session object outlives the screens; React just watches it.
  */
-export function OnlineFlow({ onExit }: { onExit: () => void }) {
+export function OnlineFlow({
+  onExit,
+  initialCode = '',
+}: {
+  onExit: () => void
+  initialCode?: string
+}) {
   const [session, setSession] = useState<OnlineSession | null>(null)
 
   if (!session) {
     return (
       <OnlineEntry
+        initialCode={initialCode}
         onCreate={(name) => {
           const s = new OnlineSession(name)
           s.create()
@@ -56,6 +63,7 @@ function SessionScreens({
   onExit: () => void
 }) {
   const snap = useSyncExternalStore(session.subscribe, session.getSnapshot)
+  const toasts = <Toasts session={session} />
 
   if (snap.status === 'connecting') {
     return (
@@ -77,11 +85,21 @@ function SessionScreens({
   }
 
   if (snap.status === 'lobby') {
-    return <LobbyScreen session={session} onLeave={onLeave} />
+    return (
+      <>
+        <LobbyScreen session={session} onLeave={onLeave} />
+        {toasts}
+      </>
+    )
   }
 
   // playing (or dropped mid-game, which renders the table plus a banner)
-  return <OnlineTable session={session} onExit={onExit} dropped={snap.status === 'dropped'} />
+  return (
+    <>
+      <OnlineTable session={session} onExit={onExit} dropped={snap.status === 'dropped'} />
+      {toasts}
+    </>
+  )
 }
 
 function OnlineTable({
@@ -122,13 +140,15 @@ function OnlineEntry({
   onCreate,
   onJoin,
   onBack,
+  initialCode,
 }: {
   onCreate: (name: string) => void
   onJoin: (name: string, code: string) => void
   onBack: () => void
+  initialCode: string
 }) {
   const [name, setName] = useState('')
-  const [code, setCode] = useState('')
+  const [code, setCode] = useState(initialCode.toUpperCase())
   const ready = name.trim().length > 0
 
   return (
@@ -200,6 +220,7 @@ function LobbyScreen({ session, onLeave }: { session: OnlineSession; onLeave: ()
         <span className="lobby__hint">
           Friends open the game, choose Online, and join with this code.
         </span>
+        <CopyRow code={snap.code} />
       </div>
 
       <section className="setup__block">
@@ -270,6 +291,116 @@ function LobbyScreen({ session, onLeave }: { session: OnlineSession; onLeave: ()
       )}
     </Shell>
   )
+}
+
+/**
+ * Corner notices for table comings and goings: joins and leaves in the lobby,
+ * drops and returns mid-game. Derived client-side by diffing roster updates.
+ */
+interface Toast {
+  id: number
+  text: string
+}
+
+function Toasts({ session }: { session: OnlineSession }) {
+  const snap = useSyncExternalStore(session.subscribe, session.getSnapshot)
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const prev = useRef<Map<string, RosterEntry> | null>(null)
+  const nextId = useRef(1)
+
+  useEffect(() => {
+    const humans = snap.roster.filter((p) => !p.isBot)
+    const current = new Map(humans.map((p) => [p.id, p]))
+    const before = prev.current
+    prev.current = current
+    if (before === null) return // don't announce the roster you walked in on
+
+    const notices: string[] = []
+    for (const [id, p] of current) {
+      if (p.id === snap.playerId) continue
+      const was = before.get(id)
+      if (!was) notices.push(`${p.name} joined the table`)
+      else if (!was.connected && p.connected) notices.push(`${p.name} is back`)
+      else if (was.connected && !p.connected) notices.push(`${p.name} lost their connection`)
+    }
+    for (const [id, p] of before) {
+      if (id !== snap.playerId && !current.has(id)) notices.push(`${p.name} left the table`)
+    }
+    if (notices.length === 0) return
+
+    const added = notices.map((text) => ({ id: nextId.current++, text }))
+    setToasts((t) => [...t, ...added].slice(-3))
+    for (const toast of added) {
+      window.setTimeout(
+        () => setToasts((t) => t.filter((x) => x.id !== toast.id)),
+        3600,
+      )
+    }
+  }, [snap.roster, snap.playerId])
+
+  if (toasts.length === 0) return null
+  return (
+    <div className="toasts" role="status" aria-live="polite">
+      {toasts.map((toast) => (
+        <div key={toast.id} className="toast">
+          {toast.text}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Copy the bare code, or a link that opens the game with the code filled in. */
+function CopyRow({ code }: { code: string }) {
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null)
+
+  const copy = async (what: 'code' | 'link') => {
+    const text = what === 'code' ? code : inviteLink(code)
+    const ok = await writeClipboard(text)
+    setCopied(ok ? what : null)
+    if (ok) window.setTimeout(() => setCopied(null), 1800)
+  }
+
+  return (
+    <div className="lobby__copy">
+      <button className="copybtn" onClick={() => void copy('code')}>
+        {copied === 'code' ? 'Copied ✓' : 'Copy code'}
+      </button>
+      <button className="copybtn copybtn--gold" onClick={() => void copy('link')}>
+        {copied === 'link' ? 'Link copied ✓' : 'Copy invite link'}
+      </button>
+    </div>
+  )
+}
+
+function inviteLink(code: string): string {
+  const url = new URL(window.location.href)
+  url.search = ''
+  url.hash = ''
+  url.searchParams.set('join', code)
+  return url.toString()
+}
+
+async function writeClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    // Older browsers / odd contexts: the hidden-textarea fallback.
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.style.position = 'fixed'
+      area.style.opacity = '0'
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      area.remove()
+      return ok
+    } catch {
+      return false
+    }
+  }
 }
 
 function SeatRow({

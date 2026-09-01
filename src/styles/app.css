@@ -1055,9 +1055,6 @@ select {
   color: var(--gold-hi);
 }
 
-.panel--gate .panel__title {
-  font-size: 2.1rem;
-}
 
 .panel .btn {
   margin-top: 0.5rem;
@@ -1363,4 +1360,80 @@ select {
 .room__code {
   color: var(--gold);
   letter-spacing: 0.14em;
+}
+
+/* --- lobby copy buttons ---------------------------------------------------- */
+
+.lobby__copy {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.copybtn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.copybtn:hover {
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.copybtn--gold {
+  border-color: rgba(216, 179, 90, 0.55);
+  color: var(--gold-hi);
+  background: rgba(216, 179, 90, 0.12);
+}
+
+.copybtn--gold:hover {
+  background: rgba(216, 179, 90, 0.2);
+}
+
+/* --- toasts ---------------------------------------------------------------- */
+
+.toasts {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 3.6rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  z-index: 30;
+  pointer-events: none;
+  width: max-content;
+  max-width: 92vw;
+}
+
+.toast {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #17251e, #0d1812);
+  border: 1px solid rgba(216, 179, 90, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gold-hi);
+  animation: toast-in 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  filter: saturate(0.6);
+}
+
+.btn:disabled:hover {
+  filter: saturate(0.6);
 }

@@ -9,7 +9,7 @@ import type { GameAction, GameState, Seat } from '../game/types'
  * wire, which also means a peer physically cannot read another player's cards.
  *
  * Implementations planned:
- *   - `LocalTransport`  — pass-and-play on one device. Shipped, below.
+ *   - `LocalTransport`  — a single-device game (practice vs bots). Below.
  *   - `BleTransport`    — one phone advertises as host, others connect as
  *                         centrals; actions are JSON over a GATT characteristic
  *                         with the host as the ordering authority. Needs the

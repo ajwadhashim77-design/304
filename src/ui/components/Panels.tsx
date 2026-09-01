@@ -1,34 +1,9 @@
 import { SUIT_SYMBOL, cardLabel } from '../../game/cards'
-import { bidOptions, teamOf } from '../../game/rules'
+import { bidOptions } from '../../game/rules'
 import { nameOf, teamName } from '../../game/engine'
 import type { GameState, Seat } from '../../game/types'
 import { PlayingCard } from './PlayingCard'
 import type { GameApi } from '../useGame'
-
-/** "Hand the phone to Kavi" — the privacy curtain for pass-and-play. */
-export function PassGate({ api }: { api: GameApi }) {
-  const { state, actor } = api
-  return (
-    <div className="overlay">
-      <div className="panel panel--gate">
-        <p className="panel__eyebrow">Cards down</p>
-        <h2 className="panel__title">Pass to {nameOf(state, actor)}</h2>
-        <p className="panel__body">
-          {teamName(state, teamOf(actor))} · {phaseHint(state)}
-        </p>
-        <button className="btn btn--gold" onClick={api.reveal}>
-          I'm {nameOf(state, actor)} — show my hand
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function phaseHint(state: GameState): string {
-  if (state.phase === 'bidding') return 'Your turn to bid'
-  if (state.phase === 'choosing-trump') return 'Choose your trump'
-  return 'Your turn to play'
-}
 
 export function BidPanel({ api }: { api: GameApi }) {
   const { state, moves, actor } = api

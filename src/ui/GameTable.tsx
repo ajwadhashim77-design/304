@@ -9,7 +9,6 @@ import {
   BidPanel,
   ContractStrip,
   HandOverPanel,
-  PassGate,
   Scoreboard,
   TrickLog,
   TrumpMark,
@@ -30,7 +29,7 @@ export function GameTable({ api, onNewMatch, onQuit }: {
   onNewMatch: () => void
   onQuit: () => void
 }) {
-  const { state, actor, moves, revealed, needsPass, setup } = api
+  const { state, actor, moves, revealed, setup } = api
 
   // Everything is drawn from the point of view of whoever is holding the phone.
   const viewer: Seat = revealed ?? actor
@@ -177,14 +176,8 @@ export function GameTable({ api, onNewMatch, onQuit }: {
           </>
         )}
 
-        {showHand && setup.mode === 'pass-and-play' && (
-          <button className="dock__hide" onClick={api.hide}>
-            Hide my cards
-          </button>
-        )}
       </footer>
 
-      {needsPass && <PassGate api={api} />}
       {(state.phase === 'hand-over' || state.phase === 'match-over') && (
         <HandOverPanel api={api} onNewMatch={onNewMatch} />
       )}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import { botAction, createGame, legalMoves, needsResolve, reduce } from '../game'
 import type {
@@ -12,7 +12,7 @@ import type {
 import type { RosterEntry } from '../../server/protocol'
 import { LocalTransport } from '../net/transport'
 
-export type TableMode = 'pass-and-play' | 'solo' | 'online'
+export type TableMode = 'solo' | 'online'
 
 export interface TableSetup {
   mode: TableMode
@@ -42,12 +42,10 @@ export interface TableApi {
   setup: TableSetup
   actor: Seat
   moves: LegalMoves
+  /** The seat whose hand is face up on this device. */
   revealed: Seat | null
-  needsPass: boolean
   waitingOnHuman: boolean
   isBot: (seat: Seat) => boolean
-  reveal: () => void
-  hide: () => void
   play: (cardId: string) => void
   bid: (amount: number) => void
   pass: () => void
@@ -66,11 +64,8 @@ export function useGame(setup: TableSetup): TableApi {
     createGame({ players: setup.players, rules: setup.rules }),
   )
 
-  // Pass-and-play: only one hand is on screen at a time. `revealed` is the seat
-  // whose cards are currently face up on this device.
-  const [revealed, setRevealed] = useState<Seat | null>(
-    setup.mode === 'solo' ? humanSeat(setup.players) : null,
-  )
+  // Locally there is exactly one human, and their hand stays face up.
+  const revealed: Seat = humanSeat(setup.players)
 
   const transport = useMemo(
     () => new LocalTransport(setup.players.map((p) => p.name)),
@@ -112,16 +107,6 @@ export function useGame(setup: TableSetup): TableApi {
     return () => void (timer.current && clearTimeout(timer.current))
   }, [state, actor, isBot, send])
 
-  // In solo play the human always sees their own hand. In pass-and-play the
-  // device is handed over, so hide everything until the next player says so.
-  useEffect(() => {
-    if (setup.mode === 'solo') {
-      setRevealed(humanSeat(setup.players))
-      return
-    }
-    if (revealed !== null && revealed !== actor && !isBot(actor)) setRevealed(null)
-  }, [actor, isBot, revealed, setup.mode, setup.players])
-
   const moves = useMemo(() => legalMoves(state, actor), [state, actor])
 
   const waitingOnHuman =
@@ -129,19 +114,14 @@ export function useGame(setup: TableSetup): TableApi {
     (state.phase === 'bidding' || state.phase === 'choosing-trump' || state.phase === 'playing') &&
     !needsResolve(state)
 
-  const needsPass = setup.mode === 'pass-and-play' && waitingOnHuman && revealed !== actor
-
   return {
     state,
     setup,
     actor,
     moves,
     revealed,
-    needsPass,
     waitingOnHuman,
     isBot,
-    reveal: () => setRevealed(actor),
-    hide: () => setRevealed(null),
     play: (cardId: string) => send({ type: 'PLAY', seat: actor, cardId }),
     bid: (amount: number) => send({ type: 'BID', seat: actor, amount }),
     pass: () => send({ type: 'PASS', seat: actor }),
