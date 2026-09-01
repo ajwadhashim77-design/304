@@ -128,7 +128,7 @@ function playAction(state: GameState, seat: Seat): GameAction {
   return { type: 'PLAY', seat, cardId: cheapest(options) }
 }
 
-function chooseLead(state: GameState, options: CardId[]): CardId {
+function chooseLead(_state: GameState, options: CardId[]): CardId {
   const bySuit = groupBySuit(options)
   // Lead a suit where we hold the Jack — the top card and 30 points at once.
   for (const suit of SUITS) {
