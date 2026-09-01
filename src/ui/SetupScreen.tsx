@@ -66,7 +66,9 @@ export function SetupScreen({
 
         <section className="setup__block">
           <h2 className="setup__label">Seats &amp; teams</h2>
-          <p className="setup__note">Partners sit opposite. North–South play East–West.</p>
+          <p className="setup__note">
+            Partners sit opposite: you &amp; North are Team 1, West &amp; East are Team 2.
+          </p>
 
           <div className="seating">
             <div className="seating__cell seating__cell--n">
