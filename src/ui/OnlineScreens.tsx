@@ -263,7 +263,7 @@ function LobbyScreen({ session, onLeave }: { session: OnlineSession; onLeave: ()
       <section className="setup__block">
         <h2 className="setup__label">Seats &amp; teams</h2>
         <p className="setup__note">
-          South &amp; North are partners; West &amp; East are partners. Empty seats get a bot when
+          South &amp; North are Team 1; West &amp; East are Team 2. Empty seats get a bot when
           the game starts.
         </p>
         <div className="lobby__seats">
@@ -370,7 +370,7 @@ function Toasts({ session }: { session: OnlineSession }) {
     for (const toast of added) {
       window.setTimeout(
         () => setToasts((t) => t.filter((x) => x.id !== toast.id)),
-        3600,
+        5000,
       )
     }
   }, [snap.roster, snap.playerId])
@@ -483,7 +483,7 @@ function SeatRow({
           {occupant?.id === myId ? ' (you)' : ''}
         </span>
       )}
-      <span className="seatrow__team">{team === 0 ? 'N–S' : 'E–W'}</span>
+      <span className="seatrow__team">Team {team + 1}</span>
     </div>
   )
 }
