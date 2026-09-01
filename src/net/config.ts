@@ -7,7 +7,7 @@
  */
 
 /** Set this once after `npx wrangler deploy` prints the workers.dev URL. */
-export const PRODUCTION_SERVER = 'wss://three-oh-four.ajwadhashim77.workers.dev'
+export const PRODUCTION_SERVER = 'wss://three-oh-four.ajwadhashim.workers.dev'
 
 export function serverUrl(): string {
   if (typeof window === 'undefined') return PRODUCTION_SERVER
