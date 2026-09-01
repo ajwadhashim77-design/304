@@ -4,8 +4,8 @@ A playable web version of **304** (තුන් සිය හතර), the Sri La
 
 Four players, two teams, thirty-two cards worth exactly three hundred and four points, and a trump that nobody can see until somebody calls for it.
 
-**Today:** the complete rules engine, a casino-style table, and pass-and-play for four friends on one device (or one of you against three bots).
-**Next:** Bluetooth for people in the same room, and online rooms for people who aren't. The groundwork for both is already in place — see [Roadmap](#roadmap).
+**Today:** the complete rules engine, a casino-style table, pass-and-play for four friends on one device, practice against bots — and **online rooms**: open a table, send three friends a five-letter code, and bots fill any empty seats.
+**Next:** Bluetooth for people in the same room. The groundwork is in place — see [Roadmap](#roadmap).
 
 ---
 
@@ -17,10 +17,14 @@ npm run dev      # http://localhost:5173
 ```
 
 ```bash
-npm test         # rules engine test suite
+npm test         # engine + room-server test suites
 npm run sim 500  # play 500 whole matches headless and report on them
 npm run build    # static bundle in dist/ — drop it on any host
+npm run server   # local room server on ws://localhost:8787 (zero dependencies)
 ```
+
+With `npm run dev` and `npm run server` both running, the Online mode works
+entirely on your machine — open two browser windows and play yourself.
 
 ---
 
@@ -34,9 +38,22 @@ The build is a plain static site with no backend, so it costs nothing to host. T
 
 Either way `vite.config.ts` sets `base: './'`, so the build works from a subpath (`user.github.io/304/`) without changes.
 
-### When multiplayer lands
+### The room server
 
-Online rooms need something stateful that static hosting cannot do. The natural fit is a **Cloudflare Worker with a Durable Object per room** — one object holds the room's seed and action list, and the WebSocket Hibernation API means an idle table between hands costs nothing. Durable Objects are on the Workers free plan (SQLite-backed only), which allows 100,000 requests a day — orders of magnitude more than a few friends will ever use.
+Online rooms run on a **Cloudflare Worker with a Durable Object per room** — one object holds the room's roster, seed and action list; the WebSocket Hibernation API means an idle table costs nothing. Durable Objects are on the Workers free plan (SQLite-backed), which allows 100,000 requests a day — orders of magnitude more than a few friends will ever use.
+
+Deploying it:
+
+```bash
+npx wrangler login    # once — opens the browser to your Cloudflare account
+npx wrangler deploy   # prints https://three-oh-four.<your-subdomain>.workers.dev
+```
+
+Then put that URL (as `wss://…`) in `PRODUCTION_SERVER` in [`src/net/config.ts`](src/net/config.ts) and push — Pages rebuilds and the Online button goes live. Any build can also be pointed at any server with `?server=wss://…` in the address bar.
+
+**How sync works:** the server is the authority. It validates each move against the engine, numbers it, plays the bot seats itself, and relays the ordered log; clients replay `{seed, actions}` through the same pure engine, so every screen agrees and a reconnecting player (their seat is held, their token reclaims it) just replays to catch up. No hands cross the wire — though since every client holds the seed, a friend with dev tools open could in principle deal themselves knowledge. This is a table for people you'd play cards with, not a casino.
+
+The same room logic also runs as a plain Node process (`npm run server`) with the WebSocket framing hand-rolled — no dependencies — which is what local play and the end-to-end tests use, and would do fine on any small Node host.
 
 Bluetooth needs no hosting at all. It is phone-to-phone, so the only cost there is getting the native build onto devices: TestFlight is free, a Google Play developer account is a one-off fee, and Apple's is annual.
 
@@ -111,8 +128,6 @@ Two decisions carry the whole thing:
 ## Roadmap
 
 **Bluetooth, four to six in the same room.** This needs a native shell — Web Bluetooth cannot do phone-to-phone, so a browser will never manage it. The plan is an Expo build wrapping this codebase: `src/game` and `src/net` move across untouched, the components get rewritten against React Native primitives, and `BleTransport` implements the same `Transport` interface — one phone advertises as host and orders the actions, the rest connect as centrals and exchange JSON over a GATT characteristic.
-
-**Online rooms.** `SocketTransport` against the same interface: a short room code, a small relay, the host still ordering actions. The engine does not learn the difference.
 
 **Six-handed 304.** The six-player game is played with two 24-card decks (9 through Ace), 48 cards, eight each, two teams of three, and 608 points on the table. The engine takes seat count as a parameter in several places already, but the deck, the partnership map and the scoring all need widening before it is honest to offer it — hence four-handed only for now.
 

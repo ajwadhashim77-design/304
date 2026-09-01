@@ -1,0 +1,23 @@
+{
+  // Cloudflare Worker config for the 304 room server.
+  //   npx wrangler deploy
+  // Free plan is fine: Durable Objects with the SQLite backend, WebSocket
+  // hibernation keeps idle tables free of charge.
+  "name": "three-oh-four",
+  "main": "server/worker.ts",
+  "compatibility_date": "2026-08-01",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ROOMS",
+        "class_name": "RoomDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["RoomDO"]
+    }
+  ]
+}

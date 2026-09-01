@@ -8,9 +8,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "tsx --test src/game/*.test.ts",
+    "test": "tsx --test src/game/*.test.ts server/*.test.ts",
     "typecheck": "tsc -b",
-    "sim": "tsx scripts/simulate.ts"
+    "sim": "tsx scripts/simulate.ts",
+    "server": "tsx server/node.ts"
   },
   "dependencies": {
     "react": "^19.2.0",

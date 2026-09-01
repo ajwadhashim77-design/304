@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 import { botAction, createGame, legalMoves, needsResolve, reduce } from '../game'
-import type { GameAction, GameState, PlayerConfig, RuleSet, Seat } from '../game/types'
+import type {
+  GameAction,
+  GameState,
+  LegalMoves,
+  PlayerConfig,
+  RuleSet,
+  Seat,
+} from '../game/types'
+import type { RosterEntry } from '../../server/protocol'
 import { LocalTransport } from '../net/transport'
 
-export type TableMode = 'pass-and-play' | 'solo'
+export type TableMode = 'pass-and-play' | 'solo' | 'online'
 
 export interface TableSetup {
   mode: TableMode
@@ -13,11 +21,47 @@ export interface TableSetup {
   rules: Partial<RuleSet>
 }
 
+/** Extra context the table shows when the game is a networked room. */
+export interface OnlineInfo {
+  code: string
+  isHost: boolean
+  hostName: string
+  connection: 'ok' | 'connecting' | 'dropped'
+  /** False while queued actions are still playing out on screen. */
+  caughtUp: boolean
+  roster: RosterEntry[]
+  reconnect: () => void
+}
+
+/**
+ * Everything the table UI needs, whichever way the game is being driven —
+ * locally (`useGame`) or over a room socket (`useOnlineGame`).
+ */
+export interface TableApi {
+  state: GameState
+  setup: TableSetup
+  actor: Seat
+  moves: LegalMoves
+  revealed: Seat | null
+  needsPass: boolean
+  waitingOnHuman: boolean
+  isBot: (seat: Seat) => boolean
+  reveal: () => void
+  hide: () => void
+  play: (cardId: string) => void
+  bid: (amount: number) => void
+  pass: () => void
+  callTrump: () => void
+  setTrump: (cardId: string) => void
+  nextHand: () => void
+  online?: OnlineInfo
+}
+
 /** How long a completed trick sits on the table before it is swept up. */
 const TRICK_PAUSE_MS = 1400
 const BOT_THINK_MS = 650
 
-export function useGame(setup: TableSetup) {
+export function useGame(setup: TableSetup): TableApi {
   const [state, dispatch] = useReducer(reduce, undefined, () =>
     createGame({ players: setup.players, rules: setup.rules }),
   )
@@ -111,5 +155,5 @@ function humanSeat(players: PlayerConfig[]): Seat {
   return players.find((p) => !p.isBot)?.seat ?? 0
 }
 
-export type GameApi = ReturnType<typeof useGame>
+export type GameApi = TableApi
 export type { GameState }

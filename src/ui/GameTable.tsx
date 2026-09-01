@@ -19,6 +19,12 @@ import type { GameApi } from './useGame'
 
 const POSITIONS = ['south', 'west', 'north', 'east'] as const
 
+/** A human seat whose player has lost their connection (online games only). */
+function isAway(api: GameApi, seat: Seat): boolean {
+  const entry = api.online?.roster.find((p) => p.seat === seat)
+  return Boolean(entry && !entry.isBot && !entry.connected)
+}
+
 export function GameTable({ api, onNewMatch, onQuit }: {
   api: GameApi
   onNewMatch: () => void
@@ -51,7 +57,10 @@ export function GameTable({ api, onNewMatch, onQuit }: {
           ←
         </button>
         <div className="room__meta">
-          <span className="room__hand">Hand {state.handNumber}</span>
+          <span className="room__hand">
+            Hand {state.handNumber}
+            {api.online && <span className="room__code"> · {api.online.code}</span>}
+          </span>
           <ContractStrip state={state} />
         </div>
         <Scoreboard state={state} teamNames={setup.teamNames} />
@@ -80,7 +89,13 @@ export function GameTable({ api, onNewMatch, onQuit }: {
                   >
                     <span className="nameplate__name">{player.name}</span>
                     <span className="nameplate__tag">
-                      {state.declarer === player.seat ? `bid ${state.contract}` : player.isBot ? 'bot' : ''}
+                      {isAway(api, player.seat)
+                        ? 'away'
+                        : state.declarer === player.seat
+                          ? `bid ${state.contract}`
+                          : player.isBot
+                            ? 'bot'
+                            : ''}
                     </span>
                     {onTurn && <span className="nameplate__pulse" aria-hidden />}
                   </div>
@@ -162,7 +177,7 @@ export function GameTable({ api, onNewMatch, onQuit }: {
           </>
         )}
 
-        {showHand && (
+        {showHand && setup.mode === 'pass-and-play' && (
           <button className="dock__hide" onClick={api.hide}>
             Hide my cards
           </button>

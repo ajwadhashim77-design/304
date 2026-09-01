@@ -135,9 +135,15 @@ export function HandOverPanel({ api, onNewMatch }: { api: GameApi; onNewMatch: (
             <h3 className="panel__winner">
               {setup.teamNames[state.gamePoints[0] > state.gamePoints[1] ? 0 : 1]} win the match
             </h3>
-            <button className="btn btn--gold" onClick={onNewMatch}>
-              New match
-            </button>
+            {api.online && !api.online.isHost ? (
+              <p className="panel__body">
+                Waiting for {api.online.hostName} to deal a new match…
+              </p>
+            ) : (
+              <button className="btn btn--gold" onClick={onNewMatch}>
+                New match
+              </button>
+            )}
           </>
         ) : (
           <button className="btn btn--gold" onClick={api.nextHand}>

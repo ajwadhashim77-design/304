@@ -6,7 +6,13 @@ import type { TableMode, TableSetup } from './useGame'
 
 const SUGGESTED = ['Nimal', 'Kavi', 'Ruwan', 'Dilani']
 
-export function SetupScreen({ onStart }: { onStart: (setup: TableSetup) => void }) {
+export function SetupScreen({
+  onStart,
+  onOnline,
+}: {
+  onStart: (setup: TableSetup) => void
+  onOnline: () => void
+}) {
   const [mode, setMode] = useState<TableMode>('pass-and-play')
   const [names, setNames] = useState<string[]>(SUGGESTED)
   const [teamNames, setTeamNames] = useState<[string, string]>(['Us', 'Them'])
@@ -44,13 +50,17 @@ export function SetupScreen({ onStart }: { onStart: (setup: TableSetup) => void 
 
         <section className="setup__block">
           <h2 className="setup__label">Table</h2>
-          <div className="segmented">
+          <div className="segmented segmented--three">
             <button
               className={mode === 'pass-and-play' ? 'is-active' : ''}
               onClick={() => setMode('pass-and-play')}
             >
-              Play with friends
+              Pass &amp; play
               <small>Four of you, one device</small>
+            </button>
+            <button onClick={onOnline}>
+              Online
+              <small>Join with a code</small>
             </button>
             <button className={mode === 'solo' ? 'is-active' : ''} onClick={() => setMode('solo')}>
               Practice
