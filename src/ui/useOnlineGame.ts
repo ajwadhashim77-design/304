@@ -142,7 +142,7 @@ function pairName(roster: RosterEntry[], team: 0 | 1): string {
     .filter((p) => p.seat !== null && p.seat % 2 === team)
     .sort((a, b) => (a.seat ?? 0) - (b.seat ?? 0))
     .map((p) => p.name)
-  return names.join(' & ') || (team === 0 ? 'North–South' : 'East–West')
+  return names.join(' & ') || 'Team ' + (team + 1)
 }
 
 function freshGame(snap: SessionState): GameState {
