@@ -148,8 +148,45 @@ function OnlineEntry({
   initialCode: string
 }) {
   const [name, setName] = useState('')
-  const [code, setCode] = useState(initialCode.toUpperCase())
+  const [code, setCode] = useState('')
   const ready = name.trim().length > 0
+
+  // Arrived through an invite link: the table is already chosen, so the only
+  // thing to do is say who you are. No code to edit, no table to create.
+  if (initialCode) {
+    return (
+      <Shell onBack={onBack}>
+        <div className="invite">
+          <p className="invite__line">You're invited to table</p>
+          <span className="lobby__code lobby__code--sm">
+            {initialCode.toUpperCase().split('').map((ch, i) => (
+              <b key={i}>{ch}</b>
+            ))}
+          </span>
+        </div>
+        <label className="online__field">
+          <span>Your name</span>
+          <input
+            value={name}
+            maxLength={14}
+            placeholder="Your name"
+            autoFocus
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && ready) onJoin(name, initialCode)
+            }}
+          />
+        </label>
+        <button
+          className="btn btn--gold btn--wide"
+          disabled={!ready}
+          onClick={() => onJoin(name, initialCode)}
+        >
+          Join the table
+        </button>
+      </Shell>
+    )
+  }
 
   return (
     <Shell onBack={onBack}>

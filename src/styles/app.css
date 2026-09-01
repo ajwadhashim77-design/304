@@ -1437,3 +1437,30 @@ select {
 .btn:disabled:hover {
   filter: saturate(0.6);
 }
+
+/* --- invite landing -------------------------------------------------------- */
+
+.invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.2rem 1rem;
+  border-radius: 18px;
+  background: radial-gradient(120% 140% at 50% 0%, rgba(216, 179, 90, 0.14), rgba(0, 0, 0, 0.25));
+  border: 1px solid rgba(216, 179, 90, 0.35);
+}
+
+.invite__line {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(216, 179, 90, 0.85);
+}
+
+.lobby__code--sm b {
+  width: 2rem;
+  height: 2.5rem;
+  font-size: 1.3rem;
+}
